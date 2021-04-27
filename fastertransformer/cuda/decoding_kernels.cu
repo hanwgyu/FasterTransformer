@@ -271,8 +271,7 @@ namespace fastertransformer
                                                 const int m,
                                                 const int vocab_size,
                                                 const int vocab_size_padd,
-                                                cudaStream_t stream)
-  {
+                                                cudaStream_t stream) {
       dim3 grid(min(m, 65536));
       dim3 block(min(vocab_size_padd, 1024));
       const T temperature_inverse = (T)(1.f / (float) temperature);
@@ -281,6 +280,71 @@ namespace fastertransformer
                                                                       m,
                                                                       vocab_size,
                                                                       vocab_size_padd);
+  }
+
+  template <typename T>
+  __global__ void apply_repetition_penalty_kernel(T* logits,
+                                                  const float penalty,
+                                                  int* start_ids,
+                                                  int* output_ids,
+                                                  const int batch_size,
+                                                  const int local_batch_size,
+                                                  const int vocab_size,
+                                                  const int vocab_size_padd,
+                                                  const int input_len,
+                                                  const int max_input_len,
+                                                  const int step,
+                                                  const int ite) {
+
+    for(int index = blockIdx.x * blockDim.x + threadIdx.x; index < local_batch_size * step; index += blockDim.x * gridDim.x) {
+      int tid = index / local_batch_size;
+      int lid = index % local_batch_size;
+      int vid;
+      if (tid < input_len) {  // get previous tokens in start_ids
+        int bid = lid + ite * local_batch_size;
+        int idx = bid * max_input_len + tid; // start_ids shape: (batch_size, max_input_len)
+        vid = start_ids[idx];
+      } else {  // get previous tokens in output_ids
+        int idx = batch_size * tid + local_batch_size * ite + lid;  // output_ids shape: (input_len + output_len, batch_size)
+        vid = output_ids[idx];
+      }
+
+      if(vid >= vocab_size) continue;
+
+      int idx_out = lid * vocab_size_padd + vid;  // logits shape: (local_batch_size, vocab_size_padd)
+      logits[idx_out] = logits[idx_out] < T(0) ? float(logits[idx_out]) * penalty : float(logits[idx_out]) / penalty;
+    }
+  }
+
+  template <typename T>
+  void apply_repetition_penalty_kernelLauncher(T* logits,
+                                               const float penalty,
+                                               int* start_ids,
+                                               int* output_ids,
+                                               const int batch_size,
+                                               const int local_batch_size,
+                                               const int vocab_size,
+                                               const int vocab_size_padd,
+                                               const int input_len,
+                                               const int max_input_len,
+                                               const int step,
+                                               const int ite,
+                                               cudaStream_t stream) {
+
+    dim3 block(512);
+    dim3 grid((int)(ceil(local_batch_size * step / 512.)));
+    apply_repetition_penalty_kernel<T><<<grid, block, 0, stream>>>(logits,
+                                                                   penalty,
+                                                                   start_ids,
+                                                                   output_ids,
+                                                                   batch_size,
+                                                                   local_batch_size,
+                                                                   vocab_size,
+                                                                   vocab_size_padd,
+                                                                   input_len,
+                                                                   max_input_len,
+                                                                   step,
+                                                                   ite);
   }
 
   __global__ void set_start_ids_kernel(int* out_ids,
@@ -777,7 +841,7 @@ namespace fastertransformer
         args.end_id_, 
         1.f/args.temperature_, 
         args.len_penalty,
-        args.repeat_penalty, 
+        args.repetition_penalty_,
         args.vocab_mask);
   }
 
@@ -1160,6 +1224,36 @@ namespace fastertransformer
                                                          const int vocab_size,
                                                          const int vocab_size_padd,
                                                          cudaStream_t stream);
+
+
+  template void apply_repetition_penalty_kernelLauncher(float* logits,
+                                                        const float penalty,
+                                                        int* start_ids,
+                                                        int* output_ids,
+                                                        const int batch_size,
+                                                        const int local_batch_size,
+                                                        const int vocab_size,
+                                                        const int vocab_size_padd,
+                                                        const int input_len,
+                                                        const int max_input_len,
+                                                        const int step,
+                                                        const int ite,
+                                                        cudaStream_t stream);
+
+template void apply_repetition_penalty_kernelLauncher(half* logits,
+                                                      const float penalty,
+                                                      int* start_ids,
+                                                      int* output_ids,
+                                                      const int batch_size,
+                                                      const int local_batch_size,
+                                                      const int vocab_size,
+                                                      const int vocab_size_padd,
+                                                      const int input_len,
+                                                      const int max_input_len,
+                                                      const int step,
+                                                      const int ite,
+                                                      cudaStream_t stream);
+
 
   template void kernel_padding_kernelLauncher(float *padded_kernel, const float *kernel,
                                            const int row_dim, const int col_dim,

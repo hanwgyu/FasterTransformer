@@ -89,12 +89,14 @@ public:
                  const float temperature = 1.0,
                  const int tensor_para_size = 1,
                  const int layer_para_size = 1,
-                 const bool is_fuse_QKV = true) : allocator_(allocator)
+                 const bool is_fuse_QKV = true,
+                 const float repetition_penalty = 1.0) : allocator_(allocator)
     {
 #ifndef NDEBUG
         PRINT_FUNC_NAME_();
 #endif
         assert(temperature != 0.0);
+        assert(repetition_penalty > 0.0);
         assert(candidate_num > 0 || probability_threshold > 0.0);
         assert(decoder_layers % layer_para_size == 0);
 
@@ -110,6 +112,7 @@ public:
         args_.candidate_num_ = candidate_num;
         args_.probability_threshold_ = probability_threshold;
         args_.temperature_ = temperature;
+        args_.repetition_penalty_ = repetition_penalty;
         
         K_cache_ = new DataType_ *[1];
         V_cache_ = new DataType_ *[1];
@@ -688,6 +691,7 @@ public:
                     cudaDeviceSynchronize();
                     check_cuda_error(cudaGetLastError());
 #endif
+
                     // reduce and concat the reuslt
                     if(t_parallel_param_.world_size > 1)
                     {
@@ -704,7 +708,33 @@ public:
                     cudaDeviceSynchronize();
                     check_cuda_error(cudaGetLastError());
 #endif
+
                     n = args_.vocab_size_padded_;
+
+                    // Apply repetition penalty.
+                    if (args_.repetition_penalty_ != 1.0) {
+                        PUSH_RANGE("After Transformer/Repetition_penalty")
+                        apply_repetition_penalty_kernelLauncher(logits_buf_,
+                                                                args_.repetition_penalty_,
+                                                                decoding_params.d_start_ids,
+                                                                decoding_params.output_ids,
+                                                                m,
+                                                                local_batch,
+                                                                args_.vocab_size_,
+                                                                n,
+                                                                input_len,
+                                                                max_input_len,
+                                                                step,
+                                                                ite,
+                                                                decoding_params.stream);
+                        POP_RANGE
+                    }
+
+#ifndef NDEBUG
+                    cudaDeviceSynchronize();
+                    check_cuda_error(cudaGetLastError());
+#endif
+
                     // Sampling
                     if(args_.candidate_num_ > 0 && args_.probability_threshold_ == 0.0)
                     {

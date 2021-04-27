@@ -99,7 +99,7 @@ struct GptArguments : public DecodingSamplingArguments
   int start_len_;
   float temperature_{2.0};
   float len_penalty{1.0};
-  float repeat_penalty{2.0};
+  float repetition_penalty_{1.0};
   int *vocab_mask{nullptr};
   int min_gpu_num_{1};
 };

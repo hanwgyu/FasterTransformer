@@ -40,6 +40,7 @@ FasterTransformerGPT::FasterTransformerGPT(
     const int64_t layer_para_batch_size,
     const bool is_fuse_QKV,
     const int max_batch_size,
+    const double repetition_penalty,
     Tensor embedding_table,
     Tensor position_encoding_table,
     vector<Tensor> self_layernorm_gamma,
@@ -98,12 +99,14 @@ FasterTransformerGPT::FasterTransformerGPT(
   case at::ScalarType::Float:
     gpt = new torch_ext::GPT<float>(head_num, size_per_head, vocab_size,
                                     start_id, end_id, decoder_layers, candidate_num, probability_threshold, temperature, max_seq_len, 
-                                    tensor_para_size, layer_para_size, layer_para_batch_size, is_fuse_QKV, max_batch_size, weights_transformer, weights);
+                                    tensor_para_size, layer_para_size, layer_para_batch_size, is_fuse_QKV, max_batch_size, repetition_penalty,
+                                    weights_transformer, weights);
     break;
   case at::ScalarType::Half:
     gpt = new torch_ext::GPT<half>(head_num, size_per_head, vocab_size,
-                                    start_id, end_id, decoder_layers, candidate_num, probability_threshold, temperature, max_seq_len, 
-                                    tensor_para_size, layer_para_size, layer_para_batch_size, is_fuse_QKV, max_batch_size, weights_transformer, weights);
+                                   start_id, end_id, decoder_layers, candidate_num, probability_threshold, temperature, max_seq_len,
+                                   tensor_para_size, layer_para_size, layer_para_batch_size, is_fuse_QKV, max_batch_size, repetition_penalty,
+                                   weights_transformer, weights);
     break;
   default:
     throw std::runtime_error("Wrong Tensor type.");

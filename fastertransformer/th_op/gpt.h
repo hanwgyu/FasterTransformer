@@ -61,12 +61,13 @@ public:
       const int layer_para_batch_size,
       const bool is_fuse_QKV,
       const int max_batch_size,
+      const float repetition_penalty,
       vector<vector<Tensor>> weights_transformer,
       vector<Tensor> weights)
       : max_seq_len_(max_seq_len), size_per_head_(size_per_head),
         vocab_size_(vocab_size), decoder_layers_(decoder_layers), start_id_(start_id), end_id_(end_id),
         candidate_num_(candidate_num), probability_threshold_(probability_threshold), temperature_(temperature),
-        is_fuse_QKV_(is_fuse_QKV), max_batch_size_(max_batch_size)
+        is_fuse_QKV_(is_fuse_QKV), max_batch_size_(max_batch_size), repetition_penalty_(repetition_penalty)
   {
     const int local_head_num = head_num / tensor_para_size; 
     const int global_head_num = head_num; 
@@ -254,7 +255,8 @@ public:
                                                                                         vocab_size_, decoder_layers_,
                                                                                         start_id_, end_id_,
                                                                                         candidate_num_, probability_threshold_,
-                                                                                        temperature_, tensor_para_size_, layer_para_size_, is_fuse_QKV_);
+                                                                                        temperature_, tensor_para_size_, layer_para_size_,
+                                                                                        is_fuse_QKV_, repetition_penalty_);
     
     decoding->set_tensor_parallel_param(tensor_parallel_param);
     decoding->set_layer_parallel_param(layer_parallel_param);
@@ -289,6 +291,7 @@ private:
   int layer_para_size_;
   const int is_fuse_QKV_;
   const int max_batch_size_;
+  const float repetition_penalty_;
   DecoderInitParam<T> *param;
   DecodingInitParam<T> decoding_params;
   TensorParallelParam tensor_parallel_param;
@@ -314,6 +317,7 @@ public:
     const int64_t layer_para_batch_size,
     const bool is_fuse_QKV,
     const int max_batch_size,
+    const double repetition_penalty,
     Tensor embedding_table,
     Tensor position_encoding_table,
     vector<Tensor> self_layernorm_gamma,

@@ -65,6 +65,8 @@ def main():
                         help='end token id.')
     parser.add_argument('--max_batch_size', type=int, default=8,
                         help='max batch size.')
+    parser.add_argument('--repetition_penalty', type=float, default=1.,
+                        help='repetition penalty')
     parser.add_argument('--max_seq_len', type=int, default=128,
                         help='max sequence length.')
     parser.add_argument('--fp16', action='store_true',
@@ -94,6 +96,7 @@ def main():
     end_id = args.end_id
     max_batch_size = args.max_batch_size
     max_seq_len = args.max_seq_len
+    repetition_penalty = args.repetition_penalty
 
     print("\n=============== Arguments ===============")
     for arg in vars(args):
@@ -128,7 +131,7 @@ def main():
     gpt = GPT(head_num, size_per_head, vocab_size, start_id, end_id,
               layer_num, top_k, top_p, temperature, output_len, max_seq_len, 
               tensor_para_size, layer_para_size, layer_para_batch_size, 
-              is_fuse_QKV, max_batch_size, lib_path=args.lib_path)
+              is_fuse_QKV, max_batch_size, repetition_penalty, lib_path=args.lib_path)
     gpt.load(ckpt_path=args.ckpt_path)
     if args.fp16:
         gpt.half()

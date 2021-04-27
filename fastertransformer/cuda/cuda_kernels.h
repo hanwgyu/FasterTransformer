@@ -84,6 +84,21 @@ void apply_temperature_penalty_kernelLauncher(T* logits,
                                               const int vocab_size_padd,
                                               cudaStream_t stream);
 
+template <typename T>
+void apply_repetition_penalty_kernelLauncher(T* logits,
+                                              const float penalty,
+                                              int* start_ids,
+                                              int* output_ids,
+                                              const int batch_size,
+                                              const int local_batch_size,
+                                              const int vocab_size,
+                                              const int vocab_size_padd,
+                                              const int input_len,
+                                              const int max_input_len,
+                                              const int step,
+                                              const int ite,
+                                              cudaStream_t stream);
+
 void set_start_ids_kernelLauncher(int* out_ids,
                                   const int* in_ids,
                                   const int max_start_len,

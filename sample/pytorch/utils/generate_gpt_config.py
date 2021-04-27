@@ -31,6 +31,7 @@ def generate_gpt_config(args):
         "candidate_num": "{}".format(args['sampling_topk']),
         "probability_threshold": "{}".format(args['sampling_topp']),
         "temperature": "{}".format(args['temperature']),
+        "repetition_penalty": "{}".format(args['repetition_penalty']),
         "tensor_para_size": "{}".format(args['tensor_para_size']),
         "layer_para_size": "{}".format(args['layer_para_size']),
         "is_half": "{}".format(is_half),
@@ -86,6 +87,8 @@ if __name__ == "__main__":
                         help='Model path prfix. Default is "./models".')
     parser.add_argument('-temperature', '--temperature', type=float, default=1.0, metavar='NUMBER',
                         help='temperature of penalty. Default is 1.0.')
+    parser.add_argument('-repetition_penalty', '--repetition_penalty', type=float, default=1.0, metavar='NUMBER',
+                        help='repetition penalty. Default is 1.0.')
     parser.add_argument('-request_batch_size', '--request_batch_size', type=int, default=8, metavar='NUMBER',
                         help='batch size (default: 8)')
     parser.add_argument('-request_input_len', '--request_input_len', type=int, default=8, metavar='NUMBER',

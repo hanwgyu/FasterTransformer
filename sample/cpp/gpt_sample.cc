@@ -340,6 +340,7 @@ void decoding_sample(const INIReader reader)
   const int candidate_num = reader.GetInteger("ft_instance_hyperparameter", "candidate_num");
   const float probability_threshold = reader.GetFloat("ft_instance_hyperparameter", "probability_threshold");
   const float temperature = reader.GetFloat("ft_instance_hyperparameter", "temperature");
+  const float repetition_penalty = reader.GetFloat("ft_instance_hyperparameter", "repetition_penalty");
   const int tensor_para_size = reader.GetInteger("ft_instance_hyperparameter", "tensor_para_size");
   const int layer_para_size = reader.GetInteger("ft_instance_hyperparameter", "layer_para_size");
   const int layer_para_batch_size = reader.GetInteger("ft_instance_hyperparameter", "layer_para_batch_size");
@@ -605,7 +606,8 @@ void decoding_sample(const INIReader reader)
                                                         vocab_size, decoder_layers,
                                                         start_id, end_id,
                                                         candidate_num, probability_threshold,
-                                                        temperature, tensor_para_size, layer_para_size, is_fuse_QKV);
+                                                        temperature, tensor_para_size, layer_para_size, is_fuse_QKV,
+                                                        repetition_penalty);
   decoding->set_tensor_parallel_param(tensor_parallel_param);
   decoding->set_layer_parallel_param(layer_parallel_param);
 
