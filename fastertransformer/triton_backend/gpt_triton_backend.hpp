@@ -35,6 +35,8 @@ struct GptModel : public AbstractTransformerModel {
    size_t layer_para_batch_size = 0,
    const float probability_threshold = 0.0,
    const bool is_fuse_QKV = true,
+   const float temperature = 0.0,
+   const float repetition_penalty = 0.0,
    const std::string model_name = "",
    const std::string model_path_prefix = "")
     : batch_size(batch_size),
@@ -49,6 +51,8 @@ struct GptModel : public AbstractTransformerModel {
       layer_para_batch_size(layer_para_batch_size),
       probability_threshold(probability_threshold),
       is_fuse_QKV(is_fuse_QKV),
+      temperature(temperature),
+      repetition_penalty(repetition_penalty),
       model_name(model_name),
       model_path_prefix(model_path_prefix){}
 
@@ -66,6 +70,8 @@ struct GptModel : public AbstractTransformerModel {
   size_t layer_para_batch_size;
   const float probability_threshold;
   const bool is_fuse_QKV;
+  const float temperature;
+  const float repetition_penalty;
   const std::string model_name;
   const std::string model_path_prefix;
 
@@ -85,6 +91,8 @@ struct GptModel : public AbstractTransformerModel {
        << "\nlayer_para_size: " << layer_para_size
        << "\nlayer_para_batch_size: " << layer_para_batch_size
        << "\nprobability_threshold: " << probability_threshold
+       << "\ntemperature: " << temperature
+       << "\nrepetition_penalty: " << repetition_penalty
        << "\nis_fuse_QKV: " << is_fuse_QKV
        << "\nmodel_name: " << model_name
        << "\nmodel_path_prefix: " << model_path_prefix << std::endl;

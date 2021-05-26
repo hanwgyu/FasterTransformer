@@ -51,6 +51,8 @@ std::shared_ptr<AbstractTransformerModel> AbstractTransformerModel::createGptMod
                   reader.GetInteger("ft_instance_hyperparameter", "layer_para_batch_size"),
                   reader.GetFloat("ft_instance_hyperparameter", "probability_threshold"),
                   reader.GetInteger("ft_instance_hyperparameter", "is_fuse_QKV"),
+                  reader.GetFloat("ft_instance_hyperparameter", "temperature"),
+                  reader.GetFloat("ft_instance_hyperparameter", "repetition_penalty"),
                   reader.Get("ft_instance_hyperparameter", "model_name"),
                   reader.Get("ft_instance_hyperparameter", "model_path_prefix"));
   else
@@ -67,6 +69,8 @@ std::shared_ptr<AbstractTransformerModel> AbstractTransformerModel::createGptMod
                   reader.GetInteger("ft_instance_hyperparameter", "layer_para_batch_size"),
                   reader.GetFloat("ft_instance_hyperparameter", "probability_threshold"),
                   reader.GetInteger("ft_instance_hyperparameter", "is_fuse_QKV"),
+                  reader.GetFloat("ft_instance_hyperparameter", "temperature"),
+                  reader.GetFloat("ft_instance_hyperparameter", "repetition_penalty"),
                   reader.Get("ft_instance_hyperparameter", "model_name"),
                   reader.Get("ft_instance_hyperparameter", "model_path_prefix"));
 }
@@ -245,7 +249,7 @@ std::unique_ptr<AbstractTransformerModelInstance> GptModel<OpType>::createModelI
                                                           vocab_size, decoder_layers,
                                                           start_id, end_id,
                                                           candidate_num, probability_threshold,
-                                                          1.0, tensor_para_size, layer_para_size, is_fuse_QKV);
+                                                          temperature, tensor_para_size, layer_para_size, is_fuse_QKV,repetition_penalty );
 
   return std::unique_ptr<GptModelInstance<OpType>>
     (new GptModelInstance<OpType>(
